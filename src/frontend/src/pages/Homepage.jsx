@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Briefcase, Heart, Clock, Award, Users, DollarSign } from "lucide-react";
 import "../styles/homepage.css";
 
@@ -59,6 +60,71 @@ const HomePage = () => {
   const switchTab = (tab) => {
     setActiveTab(tab);
   };
+
+  // Redirect after login/signup
+  const navigate = useNavigate();
+
+  // Signup State
+  const [signupData, setSignupData] = useState({
+    signupEmail: "",
+    signupPhone: "",
+    signupPassword: "",
+    signupConfirmPassword: ""
+  });
+
+  // Login State
+  const [loginData, setLoginData] = useState({
+    loginEmail: "",
+    loginPassword: "",
+  });
+
+  // Signup Input Handler
+  const handleSignupChange = (e) => {
+    setSignupData({ ...signupData, [e.target.name]: e.target.value });
+  };
+
+  // Login Input Handler
+  const handleLoginChange = (e) => {
+    setLoginData({ ...loginData, [e.target.name]: e.target.value });
+  };
+
+  // Signup form Submit
+  const handleSignup = async (e) => {
+    // Prevent page reload
+    e.preventDefault();
+
+    try{
+      const res = await fetch("http://localhost:5000/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(signupData)
+      });
+
+      const data = await res.json();
+
+      // Redirect to applicant homepage if the data insertion is successful
+      if (data.success) {
+        navigate(data.redirect);
+      } else {
+        alert(data.message || "Signup failed.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("server error. Please try again.");
+    }
+
+  /*
+    // Login form submit
+    const handleLogin = async (e) => {
+      // Prevent page reload
+      e.preventDefault();
+
+      try {
+        const res = await fetch("http:localhost:5000/auth/")
+      }
+    }
+  */
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -397,12 +463,14 @@ const HomePage = () => {
 
               {/* SIGN UP Form */}
               <div id="signup" className={`form-content ${activeTab === "signup" ? "active" : ""}`}>
-                <form action="http://localhost:3000/register" method="post">
+                <form onSubmit={handleSignup}>
                   <div className="form-group">
                     <label>Email</label>
                     <input 
                       type="email" 
                       name="signupEmail" 
+                      value={signupData.signupEmail}
+                      onChange={handleSignupChange}
                       placeholder="Enter your email address" 
                       required 
                     />
@@ -413,6 +481,8 @@ const HomePage = () => {
                     <input 
                       type="tel" 
                       name="signupPhone" 
+                      value={signupData.signupPhone}
+                      onChange={handleSignupChange}
                       placeholder="Enter your phone number" 
                       required 
                     />
@@ -423,6 +493,8 @@ const HomePage = () => {
                     <input 
                       type="password" 
                       name="signupPassword" 
+                      value={signupData.signupPassword}
+                      onChange={handleSignupChange}
                       placeholder="Create a password" 
                       required 
                     />
@@ -433,6 +505,8 @@ const HomePage = () => {
                     <input 
                       type="password" 
                       name="signupConfirmPassword" 
+                      value={signupData.signupConfirmPassword}
+                      onChange={handleSignupChange}
                       placeholder="Confirm your password" 
                       required 
                     />

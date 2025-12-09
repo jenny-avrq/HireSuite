@@ -10,8 +10,11 @@ function App() {
         {/*main landing page */}
         <Route path="/" element={<Homepage/>} />
 
-        <Route path="/homepage" element={<ApplicantHomepage />} />
-        <Route path="/" element={<AdminHP />} />
+        {/* Applicant Homepage */}
+        <Route path="/applicant-home" element={<ApplicantHomepage />} />
+        
+        {/* Applicant Homepage */}
+        <Route path="/admin-home" element={<AdminHP />} />
         
       </Routes>
     </Router>
