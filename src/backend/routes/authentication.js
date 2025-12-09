@@ -43,7 +43,7 @@ router.post('/signup', async (req, res) => {
         });
 
         // Save session and redirect to Applicant Homepage
-        req.session.userId = userId;
+        req.session.userId = newUser.user_id;
         req.session.role = role;
 
         res.status(200).json({ success: true, redirect: '/applicant-home' });

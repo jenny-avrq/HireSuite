@@ -3,8 +3,8 @@ require('../src/database');
 
 const ApplicationSchema = new mongoose.Schema({
     application_id: { type: String, required: true, unique: true, index: true },
-    personal_info_id: { type: mongoose.Schema.Types.ObjectId, ref: 'PersonalInformation', required: true },
-    job_id: { type: mongoose.Schema.Types.ObjectId, ref: 'JobListing', required: true },
+    personal_info_id: { type: String, ref: 'PersonalInformation', required: true },
+    job_id: { type: String, ref: 'JobListing', required: true },
     status: { type: String, required: true }
 },
 

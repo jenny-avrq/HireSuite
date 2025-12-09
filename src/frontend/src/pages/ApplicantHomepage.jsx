@@ -8,7 +8,7 @@ const ApplicantHomepage = () => {
   const [applications, setApplications] = useState([]);
   const [statusBadgeCount, setStatusBadgeCount] = useState(0);
   const [hasHiredStatus, setHasHiredStatus] = useState(false);
-  
+
   // Profile form states
   const [profileData, setProfileData] = useState({
     firstName: '',
@@ -23,10 +23,11 @@ const ApplicantHomepage = () => {
   });
   
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [currentResume, setCurrentResume] = useState(null);
-  const [resumeFile, setResumeFile] = useState(null);
+  const [currentResume, setCurrentResume] = useState(null); // For new resume
+  const [resumeFile, setResumeFile] = useState(null); // For existing resume
   const [resumeId, setResumeId] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // Job listings states
   const [allJobs, setAllJobs] = useState([]);
@@ -95,7 +96,7 @@ const ApplicantHomepage = () => {
 
   const loadProfile = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/profile/fetch', {
+      const response = await fetch('http://localhost:5000/profile/fetch', {
         method: 'GET',
         credentials: 'include'
       });
@@ -114,13 +115,13 @@ const ApplicantHomepage = () => {
           address: data.residential_address || ''
         });
 
-        if (data.resume_file_name) {
+        if (data.resume) {
           setCurrentResume({
-            fileName: data.resume_file_name,
-            fileType: data.resume_file_type,
-            fileSize: data.resume_file_size
+            fileName: data.resume.fileName,
+            fileType: data.resume.fileType,
+            fileSize: data.resume.fileSize
           });
-          setResumeId(data.resume_id || null);
+          setResumeId(data.resume.resumeId || null);
         }
       }
     } catch (err) {
@@ -130,7 +131,7 @@ const ApplicantHomepage = () => {
 
   const loadApplications = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/getMyApplications', {
+      const response = await fetch('http://localhost:5000/getMyApplications', {
         method: 'GET',
         credentials: 'include'
       });
@@ -147,7 +148,7 @@ const ApplicantHomepage = () => {
   const loadJobs = async () => {
     setIsLoadingJobs(true);
     try {
-      const response = await fetch('http://localhost:3000/api/getJobs', {
+      const response = await fetch('http://localhost:5000/getJobs', {
         method: 'GET',
         credentials: 'include'
       });
@@ -210,19 +211,22 @@ const ApplicantHomepage = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    // Validate file type
+    const validTypes = ['application/pdf'];
     if (!validTypes.includes(file.type)) {
-      alert('Please upload a PDF, DOC, or DOCX file.');
+      alert('Please upload a PDF file.');
       e.target.value = '';
       return;
     }
 
+    // Validate file size (maximum of 5MB)
     if (file.size > 5 * 1024 * 1024) {
       alert('File size must be less than 5MB.');
       e.target.value = '';
       return;
     }
 
+    // Save File object for FormData upload
     setResumeFile(file);
     setCurrentResume({
       fileName: file.name,
@@ -272,7 +276,7 @@ const ApplicantHomepage = () => {
 
   const viewResume = () => {
     if (resumeId) {
-      window.open(`http://localhost:3000/api/profile/resume/${resumeId}`, '_blank');
+      window.open(`http://localhost:5000/profile/resume/${resumeId}`, '_blank');
     } else if (resumeFile) {
       const fileURL = URL.createObjectURL(resumeFile);
       window.open(fileURL, '_blank');
@@ -288,17 +292,20 @@ const ApplicantHomepage = () => {
     }
 
     try {
-      setCurrentResume(null);
-      setResumeFile(null);
-      setResumeId(null);
-      
-      const response = await fetch('http://localhost:3000/api/profile/remove-resume', {
+      const response = await fetch('http://localhost:5000/profile/remove-resume', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include'
       });
 
+      const data = await response.json();
+
+      // Only cllear state if the resume is successfully removed
       if (response.ok) {
+        setCurrentResume(null);
+        setResumeFile(null);
+        setResumeId(null);
+
         alert('Resume removed successfully.');
       }
     } catch (err) {
@@ -308,54 +315,55 @@ const ApplicantHomepage = () => {
   };
 
   const saveProfile = async () => {
-    const requiredFields = ['firstName', 'lastName', 'email', 'phoneNumber', 'dateOfBirth', 'gender', 'address'];
-    const missingFields = requiredFields.filter(field => !profileData[field] || profileData[field].trim() === '');
-    
-    if (missingFields.length > 0) {
-      alert('Please fill in all required fields.');
-      return;
-    }
+    if (saving) return;
+    setSaving(true);
 
     try {
-      let resumeData = null;
+      const requiredFields = ['firstName', 'lastName', 'email', 'phoneNumber', 'dateOfBirth', 'gender', 'address'];
+      const missingFields = requiredFields.filter(field => !profileData[field] || profileData[field].trim() === '');
       
-      if (resumeFile) {
-        const reader = new FileReader();
-        const base64Data = await new Promise((resolve) => {
-          reader.onload = () => resolve(reader.result.split(',')[1]);
-          reader.readAsDataURL(resumeFile);
-        });
-        
-        resumeData = {
-          fileData: base64Data,
-          fileName: resumeFile.name,
-          fileType: resumeFile.type,
-          fileSize: resumeFile.size,
-          uploadDate: new Date().toISOString()
-        };
+      if (missingFields.length > 0) {
+        alert('Please fill in all required fields.');
+        return;
       }
 
-      const response = await fetch('http://localhost:3000/api/profile/update', {
+      const formData = new FormData();
+      Object.keys(profileData).forEach(key => formData.append(key, profileData[key] ?? ''));
+
+      if (resumeFile) {
+        formData.append('resumeFile', resumeFile); // File upload
+      }
+
+      const response = await fetch('http://localhost:5000/profile/update', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          ...profileData,
-          resumeData
-        })
+        body: formData,
+        credentials: 'include'
       });
 
-      if (response.ok) {
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('Server error:', text);
+        alert('Failed to save profile: ' + text);
+        return;
+      }
+
+      const result =  await response.json();
+
+      if (result.success) {
         alert('Profile saved successfully!');
         setIsEditingProfile(false);
         setResumeFile(null);
         await loadProfile();
       } else {
-        alert('Failed to save profile. Please try again.');
+        alert(result.error || 'Failed to save profile');
       }
+
     } catch (err) {
       console.error('Save failed:', err);
       alert('Could not save profile. Please try again.');
+    
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -704,7 +712,7 @@ const ApplicantHomepage = () => {
             ) : (
               <div className="profile-action-buttons">
                 <button className="btn btn-secondary" onClick={() => { setIsEditingProfile(false); setResumeFile(null); loadProfile(); }}>Cancel</button>
-                <button className="nav-login" onClick={saveProfile}>Save Changes</button>
+                <button className="nav-login" onClick={saveProfile} disabled={saving}>Save Changes</button>
               </div>
             )}
           </div>

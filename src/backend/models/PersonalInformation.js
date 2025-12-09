@@ -3,7 +3,7 @@ require('../src/database');
 
 const PersonalInformationSchema = new mongoose.Schema({
     personal_info_id: { type: String, required: true, unique: true, index:  true },
-    user_id: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'User', unique: true },
+    user_id: { type: String, required: true, ref: 'User', unique: true },
     first_name: { type: String, default: '' },
     middle_name: { type: String, default: '', required: false },
     last_name: { type: String, default: '' },

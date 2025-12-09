@@ -99,7 +99,8 @@ const HomePage = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         // Convert the signup object into a JSON string to send to the backend
-        body: JSON.stringify(signupData)
+        body: JSON.stringify(signupData),
+        credentials: 'include'
       });
 
       // Convert the backend response into a JavaScript object
@@ -128,7 +129,8 @@ const HomePage = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         // Convert the object into JSON string to send to the backend
-        body: JSON.stringify(loginData)
+        body: JSON.stringify(loginData),
+        credentials: 'include'
       });
 
       // Convert the backend response into a JavaScript object

@@ -24,7 +24,11 @@ app.use(session({
     secret: 'GuardiansOfTheData',
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false }
+    cookie: { 
+        secure: false,
+        httpOnly: true,
+        sameSite: "lax" 
+    }
 }));
 
 // Test route
@@ -34,9 +38,11 @@ app.get('/', (req, res) => {
 
 // Import routes
 const authRoutes = require('../routes/authentication');
+const profileRoutes = require('../routes/profile');
 
 // Use routes with the base path
 app.use('/auth', authRoutes);
+app.use('/profile', profileRoutes)
 
 // Wrap Express app in HTTP server
 const server = http.createServer(app);

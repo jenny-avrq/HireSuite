@@ -3,7 +3,7 @@ require('../src/database');
 
 const InterviewScheduleSchema = new mongoose.Schema({
     interview_id: { type: String, required: true, unique: true, index: true },
-    application_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Application', required: true },
+    application_id: { type: String, ref: 'Application', required: true },
     interview_datetime: { type: Date, default: Date.now, required: true },
     location: { type: String, required: true },
     notes: { type: String, required: false }
