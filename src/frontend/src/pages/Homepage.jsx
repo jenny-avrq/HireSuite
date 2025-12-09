@@ -64,7 +64,7 @@ const HomePage = () => {
   // Redirect after login/signup
   const navigate = useNavigate();
 
-  // Signup State
+  // Store signup form inputs
   const [signupData, setSignupData] = useState({
     signupEmail: "",
     signupPhone: "",
@@ -72,37 +72,40 @@ const HomePage = () => {
     signupConfirmPassword: ""
   });
 
-  // Login State
+  // Store login form inputs
   const [loginData, setLoginData] = useState({
     loginEmail: "",
     loginPassword: "",
   });
 
-  // Signup Input Handler
+  // Update stored signup data when user types
   const handleSignupChange = (e) => {
     setSignupData({ ...signupData, [e.target.name]: e.target.value });
   };
 
-  // Login Input Handler
+  // Update stored login data when user types
   const handleLoginChange = (e) => {
     setLoginData({ ...loginData, [e.target.name]: e.target.value });
   };
 
-  // Signup form Submit
+  // Submit signup form
   const handleSignup = async (e) => {
     // Prevent page reload
     e.preventDefault();
 
     try{
+      // Send POST request to the backend API with the signup data
       const res = await fetch("http://localhost:5000/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        // Convert the signup object into a JSON string to send to the backend
         body: JSON.stringify(signupData)
       });
 
+      // Convert the backend response into a JavaScript object
       const data = await res.json();
 
-      // Redirect to applicant homepage if the data insertion is successful
+      // Redirect to applicant homepage
       if (data.success) {
         navigate(data.redirect);
       } else {
@@ -112,18 +115,35 @@ const HomePage = () => {
       console.error(err);
       alert("server error. Please try again.");
     }
+  }
 
-  /*
-    // Login form submit
-    const handleLogin = async (e) => {
-      // Prevent page reload
-      e.preventDefault();
+  // Submit login form
+  const handleLogin = async (e) => {
+    // Prevent page reload
+    e.preventDefault();
 
-      try {
-        const res = await fetch("http:localhost:5000/auth/")
+    try {
+      // Send POST request to the backend API with the login data
+      const res = await fetch("http://localhost:5000/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // Convert the object into JSON string to send to the backend
+        body: JSON.stringify(loginData)
+      });
+
+      // Convert the backend response into a JavaScript object
+      const data = await res.json();
+
+      // Redirect to applicant homepage
+      if (data.success) {
+        navigate(data.redirect);
+      } else {
+        alert(data.message || "Login failed.");
       }
+    } catch (err) {
+      console.error(err);
+      alert("Server error. Please try again.");
     }
-  */
   }
 
   return (
@@ -428,12 +448,14 @@ const HomePage = () => {
 
               {/* LOGIN Form */}
               <div id="login" className={`form-content ${activeTab === "login" ? "active" : ""}`}>
-                <form action="http://localhost:3000/login" method="post">
+                <form onSubmit={handleLogin}>
                   <div className="form-group">
                     <label>Email / Phone Number</label>
                     <input 
                       type="text" 
                       name="loginEmail" 
+                      value={loginData.loginEmail}
+                      onChange={handleLoginChange}
                       placeholder="Enter your email or phone number" 
                       required 
                     />
@@ -444,6 +466,8 @@ const HomePage = () => {
                     <input 
                       type="password" 
                       name="loginPassword" 
+                      value={loginData.loginPassword}
+                      onChange={handleLoginChange}
                       placeholder="Enter your password" 
                       required 
                     />
