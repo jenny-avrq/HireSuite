@@ -74,7 +74,7 @@ function AdminHP() {
 
   const confirmLogout = () => {
     // Redirect to Homepage
-    window.location.href = "/homepage";
+    window.location.href = "/";
     setShowLogoutModal(false);
   };
 

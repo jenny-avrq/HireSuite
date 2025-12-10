@@ -376,7 +376,7 @@ const ApplicantHomepage = () => {
     localStorage.removeItem('userData');
     localStorage.removeItem('isLoggedIn');
     sessionStorage.clear();
-    window.location.href = "/homepage";
+    window.location.href = "/";
   };
 
   const getStatusDisplayText = (status) => {

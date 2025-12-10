@@ -13,7 +13,7 @@ function App() {
         {/* Applicant Homepage */}
         <Route path="/applicant-home" element={<ApplicantHomepage />} />
         
-        {/* Applicant Homepage */}
+        {/* Admin Homepage */}
         <Route path="/admin-home" element={<AdminHP />} />
         
       </Routes>
