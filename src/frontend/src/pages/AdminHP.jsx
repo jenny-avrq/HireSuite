@@ -83,6 +83,8 @@ function AdminHP() {
     setTimeout(() => setAlert({ show: false, message: '', type: 'success' }), 3000);
   };
 
+// === START POST JOB === //
+
   const openJobModal = (job = null) => {
     if (job) {
       setEditingJob(job);
@@ -149,7 +151,7 @@ function AdminHP() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (skills.length === 0) {
@@ -158,43 +160,180 @@ function AdminHP() {
     }
 
     const jobData = {
-      id: editingJob ? editingJob.id : 'job_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-      title: formData.jobTitle,
-      type: formData.jobType,
-      location: formData.jobLocation,
-      experience: formData.jobExperience,
-      description: formData.jobDescription,
-      skills: [...skills],
-      datePosted: new Date().toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      }),
-      timestamp: Date.now()
+      jobTitle: formData.jobTitle,
+      jobType: formData.jobType,
+      jobLocation: formData.jobLocation,
+      jobExperience: formData.jobExperience,
+      jobDescription: formData.jobDescription,
+      skills: skills
     };
 
-    if (editingJob) {
-      setJobs(jobs.map(job => job.id === editingJob.id ? jobData : job));
-      showAlertMessage('Job successfully updated!', 'success');
-    } else {
-      setJobs([...jobs, jobData]);
-      showAlertMessage('Job successfully created!', 'success');
-    }
+    try {
+      let res, data;
 
-    closeJobModal();
+      // Check if the job post is just being edited
+      if (editingJob) {
+        // Edit existing job
+        res = await fetch(`http://localhost:5000/job/edit-job/${editingJob.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(jobData)
+        });
+
+        data = await res.json();
+
+        if (res.ok) {
+          showAlertMessage("Job successfully updated!", "success");
+        }
+
+        // Format job data received from the backend to suit frontend format
+        const formattedJob = {
+          id: data.job.job_id,
+          title: data.job.job_title,
+          type: data.job.job_type,
+          location: data.job.location,
+          experience: data.job.experience,
+          description: data.job.description,
+          skills: data.job.skills,
+          datePosted: new Date(data.job.createdAt).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric"
+          })
+        };
+
+        // Replace the job updated in the UI
+        setJobs(prev => prev.map(job => job.id === formattedJob.id ? formattedJob : job));
+
+        closeJobModal();
+
+      } else {
+        // Create a new job post
+        res = await fetch("http://localhost:5000/job/post-job", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(jobData)
+        });
+
+        data = await res.json();
+
+        if (res.ok) {
+          showAlertMessage("Job successfully created!", "success");
+          
+          // Format job data received from the backend to suit frontend format
+          const formattedJob = {
+            id: data.job_id,
+            title: data.job.job_title,
+            type: data.job.job_type,
+            location: data.job.location,
+            experience: data.job.experience,
+            description: data.job.description,
+            skills: data.job.skills,
+            datePosted: new Date(data.job.createdAt).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric"
+            })
+          };
+
+          // Update UI list without refreshing the page
+          setJobs((prev) => [...prev, formattedJob]);
+          
+          closeJobModal();
+        } else {
+          showAlertMessage(data.error || "Error posting job", "danger");
+        }
+      }
+    } catch (error) {
+      console.error("Error posting job:", error);
+      showAlertMessage("Network Error. Try again.", "danger");
+    }
   };
+
+// === END JOB POST === //
+
+// === START JOB DISPLAY === //
+
+useEffect(() => {
+  const fetchJobs = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/job/get-jobs", {
+        credentials: "include"
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        
+        const formattedJobs = data.map(job => ({
+          id: job.job_id,
+          title: job.job_title,
+          type: job.job_type,
+          location: job.location,
+          experience: job.experience,
+          description: job.description,
+          skills: job.skills,
+          datePosted: new Date(job.createdAt).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric"
+          })
+        }));
+
+        setJobs(formattedJobs);
+
+      } else {
+        console.error(data.error);
+      }
+      
+    } catch (error) {
+      console.error("Fetch jobs error:", error);
+    }
+  };
+
+  fetchJobs();
+
+}, []);
+
+// === END JOB DISPLAY === //
+
+// === START JOB DELETE === //
 
   const openDeleteModal = (jobId) => {
     setDeleteJobId(jobId);
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
-    setJobs(jobs.filter(job => job.id !== deleteJobId));
-    setShowDeleteModal(false);
-    setDeleteJobId(null);
-    showAlertMessage('Job successfully deleted!', 'success');
+  const confirmDelete = async () => {
+
+    try {
+      const res = await fetch(`http://localhost:5000/job/remove-post/${deleteJobId}`, {
+        method: "DELETE",
+        credentials: "include"
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // Remove post from the UI
+        setJobs(jobs.filter(job => job.id !== deleteJobId));
+
+        setShowDeleteModal(false);
+        setDeleteJobId(null);
+        showAlertMessage('Job successfully deleted!', 'success');
+      
+      } else {
+        showAlertMessage(data.error || 'Error deleting job', 'danger');
+      }
+    } catch (err) {
+      console.error('Error deleting job:', err);
+      showAlertMessage('Network Error. Try again.', "danger");
+    }
   };
+
+  // === END JOB DELETE === //
 
   // Applicant functions
   useEffect(() => {
