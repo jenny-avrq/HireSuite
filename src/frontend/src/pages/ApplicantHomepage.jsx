@@ -30,7 +30,7 @@ const ApplicantHomepage = () => {
   const [saving, setSaving] = useState(false);
 
   // Job listings states
-  const [allJobs, setAllJobs] = useState([]);
+  const [allJobs, setJobs] = useState([]);
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [jobTypeFilter, setJobTypeFilter] = useState('all');
   const [locationFilter, setLocationFilter] = useState('all');
@@ -54,7 +54,7 @@ const ApplicantHomepage = () => {
   }, []);
 
   useEffect(() => {
-    loadApplications();
+    // loadApplications();
     loadJobs();
   }, []);
 
@@ -74,6 +74,8 @@ const ApplicantHomepage = () => {
     }
   }, [mobileMenuOpen, logoutModalOpen]);
 
+// === START PROFILE === //
+
   useEffect(() => {
     if (profileData.dateOfBirth) {
       const dob = new Date(profileData.dateOfBirth);
@@ -88,11 +90,6 @@ const ApplicantHomepage = () => {
       setProfileData(prev => ({ ...prev, age: age.toString() }));
     }
   }, [profileData.dateOfBirth]);
-
-  // Filter jobs whenever filter values change
-  useEffect(() => {
-    filterJobs();
-  }, [jobTypeFilter, locationFilter, experienceFilter, allJobs]);
 
   const loadProfile = async () => {
     try {
@@ -127,79 +124,6 @@ const ApplicantHomepage = () => {
     } catch (err) {
       console.error('Failed to load profile:', err);
     }
-  };
-
-  const loadApplications = async () => {
-    try {
-      const response = await fetch('http://localhost:5000/getMyApplications', {
-        method: 'GET',
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setApplications(result.applications || []);
-      }
-    } catch (err) {
-      console.error('Failed to load applications:', err);
-    }
-  };
-
-  const loadJobs = async () => {
-    setIsLoadingJobs(true);
-    try {
-      const response = await fetch('http://localhost:5000/getJobs', {
-        method: 'GET',
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const jobs = await response.json();
-        const formattedJobs = jobs.map(job => ({
-          id: job.job_id,
-          title: job.job_title,
-          type: job.type,
-          location: job.location,
-          experience: job.experience,
-          skills: job.skills,
-          description: job.description,
-          datePosted: new Date().toLocaleDateString()
-        }));
-        setAllJobs(formattedJobs);
-        setFilteredJobs(formattedJobs);
-      }
-    } catch (err) {
-      console.error('Failed to load jobs:', err);
-    } finally {
-      setIsLoadingJobs(false);
-    }
-  };
-
-  const filterJobs = () => {
-    let filtered = [...allJobs];
-
-    if (jobTypeFilter !== 'all') {
-      filtered = filtered.filter(job => job.type === jobTypeFilter);
-    }
-
-    if (locationFilter !== 'all') {
-      filtered = filtered.filter(job => {
-        const locationLower = job.location.toLowerCase();
-        if (locationFilter === 'office') return locationLower.includes('on-site') || locationLower.includes('office');
-        if (locationFilter === 'remote') return locationLower.includes('remote') || locationLower.includes('work from home');
-        if (locationFilter === 'hybrid') return locationLower.includes('hybrid');
-        return true;
-      });
-    }
-
-    if (experienceFilter !== 'all') {
-      filtered = filtered.filter(job => {
-        const expLower = job.experience.toLowerCase();
-        return expLower.includes(experienceFilter);
-      });
-    }
-
-    setFilteredJobs(filtered);
   };
 
   const handleProfileChange = (e) => {
@@ -367,6 +291,85 @@ const ApplicantHomepage = () => {
     }
   };
 
+// === END PROFILE === //
+
+// === START JOB LISTING === //
+
+  // Filter jobs whenever filter values change
+  useEffect(() => {
+    filterJobs();
+  }, [jobTypeFilter, locationFilter, experienceFilter, allJobs]);
+
+  const loadJobs = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/job/get-jobs", {
+        credentials: "include"
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        const formattedJobs = data.map(job => ({
+          id: job.job_id,
+          title: job.job_title,
+          type: job.job_type,
+          location: job.location,
+          experience: job.experience,
+          description: job.description,
+          skills: job.skills,
+          datePosted: new Date(job.createdAt).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric"
+          })
+        }));
+
+        setJobs(formattedJobs);
+        setFilteredJobs(formattedJobs);
+
+      } else {
+        console.error(data.error);
+      }
+      
+    } catch (error) {
+      console.error("Fetch jobs error:", error);
+
+    } finally {
+      setIsLoadingJobs(false);
+    }
+  };
+
+  const filterJobs = () => {
+    let filtered = [...allJobs];
+
+    if (jobTypeFilter !== 'all') {
+      filtered = filtered.filter(job => job.type === jobTypeFilter);
+    }
+
+    if (locationFilter !== 'all') {
+      filtered = filtered.filter(job => {
+        const locationLower = job.location.toLowerCase();
+        if (locationFilter === 'office') return locationLower.includes('on-site') || locationLower.includes('office');
+        if (locationFilter === 'remote') return locationLower.includes('remote') || locationLower.includes('work from home');
+        if (locationFilter === 'hybrid') return locationLower.includes('hybrid');
+        return true;
+      });
+    }
+
+    if (experienceFilter !== 'all') {
+      filtered = filtered.filter(job => {
+        const expLower = job.experience.toLowerCase();
+        return expLower.includes(experienceFilter);
+      });
+    }
+
+    setFilteredJobs(filtered);
+  };
+
+// === END JOB LISTING === //
+
+// === START LOGOUT === //
+
   const handleLogout = () => {
     setLogoutModalOpen(true);
   };
@@ -377,6 +380,26 @@ const ApplicantHomepage = () => {
     localStorage.removeItem('isLoggedIn');
     sessionStorage.clear();
     window.location.href = "/";
+  };
+
+// === END LOGOUT === //
+
+// === START APPLICATIONS === //
+
+  const loadApplications = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/getMyApplications', {
+        method: 'GET',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setApplications(result.applications || []);
+      }
+    } catch (err) {
+      console.error('Failed to load applications:', err);
+    }
   };
 
   const getStatusDisplayText = (status) => {
@@ -410,6 +433,8 @@ const ApplicantHomepage = () => {
     };
     return classMap[status] || 'under-review';
   };
+
+// === END APPLICATIONS === //
 
   const StatusCard = ({ application }) => (
     <div className={`status-card ${application.status === 'hired' ? 'hired-permanent' : ''}`}>

@@ -47,7 +47,7 @@ router.post('/post-job', requireAdmin, async (req, res) => {
 });
 
 // GET job listings
-router.get('/get-jobs', requireAdmin, async (req, res) => {
+router.get('/get-jobs', async (req, res) => {
     try {
         const jobList = await JobListing.find({});
 
