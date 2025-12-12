@@ -2,10 +2,10 @@ const  express = require('express');
 const router = express.Router();
 const requireAdmin = require('../src/adminAuth');
 const Application = require('../models/Application');
-const { generateApplicationId } = require('../src/generateID');
 const PersonalInformation  = require('../models/PersonalInformation');
 const ResumeFile = require('../models/ResumeFile');
 const JobListing = require('../models/JobListing');
+const { generateApplicationId } = require('../src/generateID');
 
 // POST job application
 router.post('/submit-application', async (req, res) => {
@@ -61,17 +61,58 @@ router.post('/submit-application', async (req, res) => {
 });
 
 // GET applications
-router.get('/get-applications', requireAdmin,  async (req, res) => {
+router.get('/get-applications',  async (req, res) => {
     try  {
-        const applications = await Application.find({});
-        
-                if (!applications || applications.length === 0) {
-                    return res.status(404).json({ error: 'Application list empty.' });
+        const applications = await Application.aggregate([
+            {
+                $lookup: {
+                    from: "personalinformations",
+                    localField: "personal_info_id",
+                    foreignField: "personal_info_id",
+                    as: "personalInfo"
                 }
-        
-                console.log('All applications successfully fetched!');
-        
-                res.status(200).json(applications);
+            },
+            { $unwind: "$personalInfo" },
+
+            {
+                $lookup: {
+                    from: "joblistings",
+                    localField: "job_id",
+                    foreignField: "job_id",
+                    as: "job"
+                }
+            },
+            { $unwind: "$job" },
+
+            {
+                $lookup: {
+                    from: "resumefiles",
+                    localField: "resume_id",
+                    foreignField: "resume_id",
+                    as: "resume"
+                }
+            },
+            { $unwind: "$resume" },
+
+            // Final projection for cleaner output
+            {
+                $project: {
+                    application_id: 1,
+                    status: 1,
+                    createdAt: 1,
+                    "personalInfo.first_name": 1,
+                    "personalInfo.last_name": 1,
+                    "personalInfo.email": 1,
+                    "personalInfo.phone_number": 1,
+                    "resume.resume_file_name": 1,
+                    "job.job_title": 1
+                }
+            }
+        ]);
+
+        res.status(200).json(applications);
+        console.log('All applications successfully fetched!');
+        console.log("DATA FROM DATABASE:", applications);
 
     } catch (err) {
         console.error('Error fetching applications:', err);

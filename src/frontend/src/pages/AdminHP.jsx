@@ -335,6 +335,47 @@ useEffect(() => {
 
   // === END JOB DELETE === //
 
+  // === START DISPLAY APPLICATIONS === //
+
+  useEffect(() => {
+    const fetchApplicants = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/apply/get-applications", {
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch applications');
+        }
+
+        const data = await response.json();
+
+        const mappedApplicants =  data.map(app =>  ({
+          id: app.application_id,
+          name: `${app.personalInfo.first_name} ${app.personalInfo.last_name}`,
+          email: app.personalInfo.email,
+          phone: app.personalInfo.phone_number,
+          position: app.job.job_title,
+          status: app.status,
+          appliedDate: new Date(app.createdAt).toLocaleDateString(),
+          resumeUrl: `http://localhost:5000/profile/resume/${app.resume.resume_id}`
+        }))
+
+        setApplicants(mappedApplicants);
+        setFilteredApplicants(mappedApplicants);
+        console.log("Applicants:", data);
+
+      } catch (err) {
+        console.error('Error fetching applicants:', err);
+      }
+    };
+
+    fetchApplicants();
+
+  }, []);
+
+  // === END DISPLAY APPLICATIONS ===  //
+
   // Applicant functions
   useEffect(() => {
     filterApplicants();
@@ -853,10 +894,22 @@ useEffect(() => {
                             <span className="detail-label">Phone:</span>
                             <span>{applicant.phone}</span>
                           </div>
-                          <div className="detail-item">
-                            <span className="detail-label">Experience:</span>
-                            <span>{applicant.experience}</span>
-                          </div>
+                        </div>
+
+                        {/* Accept / Reject Buttons */}
+                        <div className="action-buttons" style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
+                          <button 
+                            className="accept-btn"
+                            //onClick={() => handleApplicationDecision(applicant.application_id, 'hired')}
+                          >
+                            Accept
+                          </button>
+                          <button 
+                            className="reject-btn"
+                            //onClick={() => handleApplicationDecision(applicant.application_id, 'rejected')}
+                          >
+                            Reject
+                          </button>
                         </div>
                       </div>
                     )}
