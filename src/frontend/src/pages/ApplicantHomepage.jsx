@@ -37,6 +37,11 @@ const ApplicantHomepage = () => {
   const [experienceFilter, setExperienceFilter] = useState('all');
   const [isLoadingJobs, setIsLoadingJobs] = useState(true);
 
+  useEffect(() => {
+  window.location.hash = "";  // clears #profile, #login, etc.
+  window.scrollTo(0, 0);      // scrolls to hero section
+}, []);
+
   // Add smooth scrolling CSS
   useEffect(() => {
     const style = document.createElement('style');
@@ -52,6 +57,7 @@ const ApplicantHomepage = () => {
   useEffect(() => {
     loadProfile();
   }, []);
+  
 
   useEffect(() => {
     // loadApplications();
@@ -160,12 +166,14 @@ const ApplicantHomepage = () => {
   };
 
   const handleDragOver = (e) => {
+    if (!isEditingProfile) return;
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
   };
 
   const handleDragLeave = (e) => {
+    if (!isEditingProfile) return;
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
@@ -517,6 +525,7 @@ const ApplicantHomepage = () => {
           <nav className="nav-desktop">
             <a href="#about" className="nav-link">About Us</a>
             <a href="#opportunities" className="nav-link">Opportunities</a>
+            <a href="#apply" className="nav-link nav-apply-btn"><Briefcase size={16} /><span>Apply</span></a>
             <a href="#applications" className="nav-link nav-link-applications">
               <Bell size={16} />
                  <span className="status-text">My Applications</span>
@@ -524,8 +533,10 @@ const ApplicantHomepage = () => {
               <span className={`status-badge ${hasHiredStatus ? 'hired-badge' : ''}`}>
            {statusBadgeCount}
           </span>
-         )}
-      </a>
+           )}
+           </a>
+         
+
            <a href="#profile" className="nav-link nav-link-profile">
                 <User size={20} />
                </a>
@@ -551,6 +562,7 @@ const ApplicantHomepage = () => {
             <button onClick={() => setMobileMenuOpen(false)} className="mobile-close">×</button>
             <a href="#about" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>About Us</a>
             <a href="#opportunities" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>Opportunities</a>
+           <a href="#apply" className="nav-link nav-apply-btn"><Briefcase size={16} /> Apply</a>
             <a href="#applications" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>
               <Bell size={16} /> My Applications
             </a>
@@ -806,6 +818,11 @@ const ApplicantHomepage = () => {
                   <div className="file-upload-wrapper">
                     <label 
                       className={`file-upload-label ${isDragging ? 'dragging' : ''}`}
+                       onClick={() => {
+                        if (!isEditingProfile) {
+                            alert('Enable "Edit Profile" to upload your resume.');
+                          }
+                         }}
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
                       onDrop={handleDrop}
@@ -816,7 +833,7 @@ const ApplicantHomepage = () => {
                         <small>or drag and drop</small>
                         <small>PDF, DOC, or DOCX (max 5MB) - REQUIRED</small>
                       </div>
-                      <input type="file" accept=".pdf,.doc,.docx" onChange={handleResumeUpload} style={{ display: 'none' }} />
+                      <input type="file" accept=".pdf,.doc,.docx" onChange={handleResumeUpload} style={{ display: 'none' }}   disabled={!isEditingProfile}  />
                     </label>
                   </div>
                 </>

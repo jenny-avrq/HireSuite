@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Briefcase, Heart, Clock, Award, Users, DollarSign } from "lucide-react";
+import { Briefcase, Heart, Clock, Award, Users, DollarSign, Eye, EyeOff } from "lucide-react";
 import "../styles/homepage.css";
 
 const HomePage = () => {
@@ -147,6 +147,25 @@ const HomePage = () => {
       alert("Server error. Please try again.");
     }
   }
+
+  // Password visibility states
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showSignupPassword, setShowSignupPassword] = useState({
+    signupPassword: false,
+    signupConfirmPassword: false
+  });
+
+  const toggleLoginPassword = () => {
+    setShowLoginPassword(prev => !prev);
+  };
+
+  const toggleSignupPassword = (field) => {
+    setShowSignupPassword(prev => ({
+      ...prev,
+    [field]: !prev[field]
+    }));
+  };
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -463,16 +482,24 @@ const HomePage = () => {
                     />
                   </div>
 
-                  <div className="form-group">
+                 <div className="form-group password-group">
                     <label>Password</label>
-                    <input 
-                      type="password" 
+                    <div className="password-input-wrapper">
+                     <input 
+                      type={showLoginPassword ? "text" : "password"} 
                       name="loginPassword" 
                       value={loginData.loginPassword}
                       onChange={handleLoginChange}
                       placeholder="Enter your password" 
                       required 
                     />
+                    <span 
+                      className="password-toggle" 
+                      onClick={toggleLoginPassword}
+                    >        
+                        {showLoginPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                      </span>
+                    </div>
                   </div>
 
                   <a href="#" className="forgot-password">Forgot Password?</a>
@@ -514,29 +541,46 @@ const HomePage = () => {
                     />
                   </div>
 
-                  <div className="form-group">
-                    <label>Password</label>
-                    <input 
-                      type="password" 
+                  <div className="form-group password-group">
+                      <label>Password</label>
+                      <div className="password-input-wrapper">
+                  <input 
+                      type={showSignupPassword.signupPassword ? "text" : "password"} 
                       name="signupPassword" 
                       value={signupData.signupPassword}
                       onChange={handleSignupChange}
                       placeholder="Create a password" 
                       required 
-                    />
+                  />
+                  <span 
+                      className="password-toggle" 
+                      onClick={() => toggleSignupPassword("signupPassword")}
+                  >
+                       {showSignupPassword.signupPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                     </span>
+                   </div>
                   </div>
 
-                  <div className="form-group">
-                    <label>Confirm Password</label>
-                    <input 
-                      type="password" 
-                      name="signupConfirmPassword" 
-                      value={signupData.signupConfirmPassword}
-                      onChange={handleSignupChange}
-                      placeholder="Confirm your password" 
-                      required 
-                    />
-                  </div>
+                  <div className="form-group password-group">
+                      <label>Confirm Password</label>
+                      <div className="password-input-wrapper">
+                  <input  
+                    type={showSignupPassword.signupConfirmPassword ? "text" : "password"} 
+                    name="signupConfirmPassword" 
+                    value={signupData.signupConfirmPassword}
+                    onChange={handleSignupChange}
+                    placeholder="Confirm your password" 
+                    required 
+                  />
+                  <span 
+                    className="password-toggle" 
+                    onClick={() => toggleSignupPassword("signupConfirmPassword")}
+                  >
+                      {showSignupPassword.signupConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                      </span>
+                     </div>
+                 </div>
+
 
                   <div className="form-footer">
                     <button type="submit" className="btn">Create Account</button>
