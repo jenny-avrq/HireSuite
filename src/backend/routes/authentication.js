@@ -2,6 +2,8 @@ const  express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const { generateUserId, generatePersonalInfoId } = require('../src/generateID');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 
 // SIGNIN
 router.post('/signup', async (req, res) => {
@@ -22,6 +24,14 @@ router.post('/signup', async (req, res) => {
     const userId = generateUserId();
     const personalInfoId = generatePersonalInfoId();
     const role = 'Applicant';
+
+    function generateUserId() {
+    return 'USR-' + Date.now(); // simple unique ID
+}
+
+function generatePersonalInfoId() {
+    return 'PI-' + Date.now(); 
+}
 
     try {
         // Check if the email or phone already exists
@@ -92,7 +102,7 @@ router.post('/login', async (req, res) => {
 
         // Redirect based on role
         if (user.role === 'Applicant') {
-            return res.status(200).json({ success: true, redirect: 'applicant-home' });
+            return res.status(200).json({ success: true, redirect: '/applicant-home' });
         } else if (user.role === 'Admin') {
             return res.status(200).json({ success: true, redirect: '/admin-home' });
         } else {
@@ -104,5 +114,6 @@ router.post('/login', async (req, res) => {
         res.status(500).json({ success: false, message: 'Login failed. Please try again.' });
     }
 })
+
 
 module.exports = router;
