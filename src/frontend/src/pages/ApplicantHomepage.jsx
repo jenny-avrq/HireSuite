@@ -22,6 +22,7 @@ const ApplicantHomepage = () => {
     address: ''
   });
   
+  // Profile states
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [currentResume, setCurrentResume] = useState(null); // For new resume
   const [resumeFile, setResumeFile] = useState(null); // For existing resume
@@ -36,6 +37,11 @@ const ApplicantHomepage = () => {
   const [locationFilter, setLocationFilter] = useState('all');
   const [experienceFilter, setExperienceFilter] = useState('all');
   const [isLoadingJobs, setIsLoadingJobs] = useState(true);
+
+  // Apply states
+  const [applyModalOpen, setApplyModalOpen] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [appliedJobs, setAppliedJobs]  = useState([]);
 
   // Add smooth scrolling CSS
   useEffect(() => {
@@ -367,6 +373,52 @@ const ApplicantHomepage = () => {
   };
 
 // === END JOB LISTING === //
+
+// === START APPLY === //
+
+const confirmApplication = async () => {
+  if (!selectedJob || !resumeId) {
+    alert('Please upload a resume before applying.');
+    return;
+  };
+
+  try {
+    const jobId = selectedJob.id;
+
+    const response = await fetch("http://localhost:5000/apply/submit-application", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        resumeId,
+        jobId,
+      }),
+      credentials: 'include',
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      // Close modal
+      setApplyModalOpen(false);
+      // Mark job as applied
+      setAppliedJobs(prev => [...prev, jobId]);
+      setSelectedJob(null);
+
+      alert(data.message);
+
+    } else {
+      alert(data.error || 'Failed to submit application.');
+    }
+
+  } catch (err) {
+    console.error('Error submitting application:', err);
+    alert('Something went wrong. Please try again.');
+  }
+};
+
+// === END APPLY === //
 
 // === START LOGOUT === //
 
@@ -1009,12 +1061,53 @@ const ApplicantHomepage = () => {
                     <p>{job.description}</p>
                   </div>
                   <div className="job-card-actions">
-                    <button className="btn-apply-job">Apply Now</button>
+                    <button className={`btn-apply-job ${appliedJobs.includes(job.id) ? 'applied' : ''}`} 
+                      onClick={() => {
+                        if (!appliedJobs.includes(job.id)) {
+                          setSelectedJob(job);
+                          setApplyModalOpen(true);
+                        }
+                      }}
+                      disabled = {appliedJobs.includes(job.id)}
+                    >
+                      {appliedJobs.includes(job.id) ? 'APPLIED' : 'Apply Now'}
+                    </button>
                   </div>
                 </div>
               ))
             )}
           </div>
+
+          {applyModalOpen && (
+            <div 
+              className="confirm-modal" 
+              onClick={(e) => 
+                e.target.className === "confirm-modal" && setApplyModalOpen(false)
+              }
+            >
+              <div className="confirm-content">
+                <div className="confirm-icon logout-icon-modal">
+                  <span>📨</span>
+                </div>
+
+                <div className="confirm-text">
+                  <h3>Confirm Application</h3>
+                  <p>Are you sure you want to apply for <strong>{selectedJob.title}</strong>?</p>
+                </div>
+
+                <div className="confirm-actions">
+                  <button className="btn btn-sm" onClick={() => setApplyModalOpen(false)}>
+                    Cancel
+                  </button>
+
+                  <button className="btn btn-sm btn-post-job" onClick={confirmApplication}>
+                    Confirm
+                  </button>
+                </div>
+                
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

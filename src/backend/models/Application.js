@@ -4,6 +4,7 @@ require('../src/database');
 const ApplicationSchema = new mongoose.Schema({
     application_id: { type: String, required: true, unique: true, index: true },
     personal_info_id: { type: String, ref: 'PersonalInformation', required: true },
+    resume_id: { type: String, ref: 'ResumeFile', required: true },
     job_id: { type: String, ref: 'JobListing', required: true },
     status: { type: String, required: true }
 },

@@ -40,11 +40,13 @@ app.get('/', (req, res) => {
 const authRoutes = require('../routes/authentication');
 const profileRoutes = require('../routes/profile');
 const jobRoutes = require('../routes/jobPost');
+const applyRoutes = require('../routes/apply');
 
 // Use routes with the base path
 app.use('/auth', authRoutes);
 app.use('/profile', profileRoutes);
 app.use('/job', jobRoutes);
+app.use('/apply', applyRoutes);
 
 // Wrap Express app in HTTP server
 const server = http.createServer(app);

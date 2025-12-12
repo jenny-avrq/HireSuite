@@ -1329,4 +1329,10 @@ html {
   .btn-apply-job {
     width: 100%;
   }
+
+  .btn-apply-job.applied {
+    background-color: gray;
+    cursor: not-allowed;
+    color: white;
+  }
 }
