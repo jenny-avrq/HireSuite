@@ -120,4 +120,42 @@ router.get('/get-applications',  async (req, res) => {
     }
 });
 
+// GET my applications for applicant
+router.get('/my-applications', async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const personalInfo = await PersonalInformation.findOne({ user_id: userId });
+    if (!personalInfo) return res.status(404).json({ error: 'Personal Information not found' });
+
+    const applications = await Application.aggregate([
+      { $match: { personal_info_id: personalInfo.personal_info_id } },
+      {
+        $lookup: {
+          from: "joblistings",
+          localField: "job_id",
+          foreignField: "job_id",
+          as: "job"
+        }
+      },
+      { $unwind: "$job" },
+      {
+        $project: {
+          application_id: 1,
+          status: 1,
+          createdAt: 1,
+          jobTitle: "$job.job_title"
+        }
+      }
+    ]);
+
+    res.status(200).json({ applications });
+  } catch (err) {
+    console.error('Error fetching my applications:', err);
+    res.status(500).json({ error: 'Database error.' });
+  }
+});
+
+
 module.exports = router;

@@ -736,6 +736,11 @@ html {
   gap: 1rem;
 }
 
+.file-upload-label.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .file-upload-label:hover {
   border-color: #f57c00;
   background: #fff3e0;

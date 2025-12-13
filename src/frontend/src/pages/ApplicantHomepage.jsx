@@ -66,7 +66,7 @@ const ApplicantHomepage = () => {
   
 
   useEffect(() => {
-    // loadApplications();
+    loadApplications();
     loadJobs();
   }, []);
 
@@ -448,7 +448,7 @@ const confirmApplication = async () => {
 
   const loadApplications = async () => {
     try {
-      const response = await fetch('http://localhost:5000/getMyApplications', {
+      const response = await fetch('http://localhost:5000/apply/my-applications', {
         method: 'GET',
         credentials: 'include'
       });
@@ -501,7 +501,7 @@ const confirmApplication = async () => {
       <div className="status-header">
         <div>
           <div className="status-job-title">{application.jobTitle}</div>
-          <div className="status-application-id">Application ID: {application.id}</div>
+          <div className="status-application-id">Application ID: {application.application_id}</div>
         </div>
         <div className={`status-badge-large ${getStatusBadgeClass(application.status)}`}>
           {getStatusDisplayText(application.status)}
@@ -513,7 +513,7 @@ const confirmApplication = async () => {
           <div className="timeline-icon completed">
             <Check size={12} />
           </div>
-          <span>Application Submitted - {new Date(application.applicationDate).toLocaleDateString()}</span>
+          <span>Application Submitted - {new Date(application.createdAt).toLocaleDateString()}</span>
         </div>
         {application.status !== 'resume-rejected' && (
           <div className="timeline-item">
@@ -781,7 +781,7 @@ const confirmApplication = async () => {
               </div>
             ) : (
               <div className="status-list">
-                {applications.map(app => <StatusCard key={app.id} application={app} />)}
+                {applications.map(app => <StatusCard key={app.appplication_id} application={app} />)}
               </div>
             )}
           </div>
@@ -869,7 +869,10 @@ const confirmApplication = async () => {
                   
                   <div className="file-upload-wrapper">
                     <label 
-                      className={`file-upload-label ${isDragging ? 'dragging' : ''}`}
+                      className={`file-upload-label
+                         ${isDragging ? 'dragging' : ''}
+                         ${!isEditingProfile ? ' disabled' : ''}
+                         `}
                        onClick={() => {
                         if (!isEditingProfile) {
                             alert('Enable "Edit Profile" to upload your resume.');
@@ -885,7 +888,10 @@ const confirmApplication = async () => {
                         <small>or drag and drop</small>
                         <small>PDF, DOC, or DOCX (max 5MB) - REQUIRED</small>
                       </div>
-                      <input type="file" accept=".pdf,.doc,.docx" onChange={handleResumeUpload} style={{ display: 'none' }}   disabled={!isEditingProfile}  />
+                      <input type="file" accept=".pdf,.doc,.docx" 
+                      onChange={handleResumeUpload}
+                       style={{ display: 'none' }}
+                          disabled={!isEditingProfile}  />
                     </label>
                   </div>
                 </>
