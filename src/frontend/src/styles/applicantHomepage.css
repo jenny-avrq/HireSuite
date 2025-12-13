@@ -1340,4 +1340,24 @@ html {
     cursor: not-allowed;
     color: white;
   }
+
+  /* Applied / Disabled Apply Button */
+.btn-apply-job.disabled,
+.btn-apply-job:disabled {
+  background-color: #e9ecef;
+  color: #6c757d;
+  border: 1px solid #ced4da;
+  cursor: not-allowed;
+  opacity: 0.75;
+  pointer-events: auto; /* keeps hover visuals consistent */
+}
+
+/* Optional hover override (prevents glow) */
+.btn-apply-job.disabled:hover,
+.btn-apply-job:disabled:hover {
+  background-color: #e9ecef;
+  box-shadow: none;
+  transform: none;
+}
+
 }

@@ -1084,16 +1084,25 @@ const confirmApplication = async () => {
                     <p>{job.description}</p>
                   </div>
                   <div className="job-card-actions">
-                    <button className={`btn-apply-job ${appliedJobs.includes(job.id) ? 'applied' : ''}`} 
+
+                    <button className={`btn-apply-job ${appliedJobs.includes(job.id) ? 'applied disabled' : ''}
+                    `} 
+                      disabled={appliedJobs.includes(job.id)}
+                       title={appliedJobs.includes(job.id) ? 'You already applied to this job' : ''}                     
                       onClick={() => {
                         if (!appliedJobs.includes(job.id)) {
                           setSelectedJob(job);
                           setApplyModalOpen(true);
                         }
-                      }}
-                      disabled = {appliedJobs.includes(job.id)}
-                    >
-                      {appliedJobs.includes(job.id) ? 'APPLIED' : 'Apply Now'}
+                      }}>
+                     {appliedJobs.includes(job.id) ? (
+                      <>
+                       <CheckCircle size={16} style={{ marginRight: 6 }} />
+                         Applied
+                           </>
+                        ) : (
+                       'Apply Now'
+                        )}
                     </button>
                   </div>
                 </div>
