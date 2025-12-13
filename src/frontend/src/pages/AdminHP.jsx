@@ -24,6 +24,13 @@ function AdminHP() {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [photoModalName, setPhotoModalName] = useState('');
   
+  // Application state
+  const [acceptModalOpen, setAcceptModalOpen] = useState(false);
+  const [selectedApplicant, setSelectedApplicant] = useState(null);
+  const ongoingStatuses = ['under-review', 'for-interview', 'final-review'];
+const archivedStatuses = ['hired', 'rejected'];
+
+
   const [formData, setFormData] = useState({
     jobTitle: '',
     jobType: '',
@@ -375,6 +382,39 @@ useEffect(() => {
   }, []);
 
   // === END DISPLAY APPLICATIONS ===  //
+
+  // === START REJECT AND HIRE APPLICANT === //
+
+const handleHireApplicant = (id) => {
+  setApplicants(prev =>
+    prev.map(app =>
+      app.id === id ? { ...app, status: 'hired' } : app
+    )
+  );
+
+  setFilteredApplicants(prev =>
+    prev.map(app =>
+      app.id === id ? { ...app, status: 'hired' } : app
+    )
+  );
+};
+
+const handleRejectApplicant = (id) => {
+  setApplicants(prev =>
+    prev.map(app =>
+      app.id === id ? { ...app, status: 'rejected' } : app
+    )
+  );
+
+  setFilteredApplicants(prev =>
+    prev.map(app =>
+      app.id === id ? { ...app, status: 'rejected' } : app
+    )
+  );
+};
+
+
+  // === END REJECT AND HIRE APPLICANT === //
 
   // Applicant functions
   useEffect(() => {
@@ -900,13 +940,13 @@ useEffect(() => {
                         <div className="action-buttons" style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
                           <button 
                             className="accept-btn"
-                            //onClick={() => handleApplicationDecision(applicant.application_id, 'hired')}
+                            onClick={() => handleHireApplicant(applicant.id)}
                           >
-                            Accept
+                            Hire
                           </button>
                           <button 
                             className="reject-btn"
-                            //onClick={() => handleApplicationDecision(applicant.application_id, 'rejected')}
+                            onClick={() => handleRejectApplicant(applicant.id)}
                           >
                             Reject
                           </button>
@@ -918,6 +958,44 @@ useEffect(() => {
               </div>
             )}
           </div>
+
+          {acceptModalOpen && selectedApplicant && (
+            <div 
+              className="confirm-modal" 
+              onClick={(e) => e.target.className === "confirm-modal" && setAcceptModalOpen(false)}
+            >
+              <div className="confirm-content">
+                <div className="confirm-icon">
+                  <span>✅</span>
+                </div>
+
+                <div className="confirm-text">
+                  <h3>Confirm Acceptance</h3>
+                  <p>
+                    Are you sure you want to hire{" "}
+                    <strong>{selectedApplicant.name}</strong>?
+                  </p>
+                </div>
+
+                <div className="confirm-actions">
+                  <button
+                    className="btn btn-sm"
+                    onClick={() => setAcceptModalOpen(false)}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    className="btn btn-sm btn-post-job"
+                    //=onClick={confirmAcceptApplicant}
+                  >
+                    Confirm
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
         </div>
       </section>
 
