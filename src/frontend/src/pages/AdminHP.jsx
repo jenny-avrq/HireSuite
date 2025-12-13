@@ -385,34 +385,35 @@ useEffect(() => {
 
   // === START REJECT AND HIRE APPLICANT === //
 
-const handleHireApplicant = (id) => {
-  setApplicants(prev =>
-    prev.map(app =>
-      app.id === id ? { ...app, status: 'hired' } : app
-    )
-  );
+  const handleHireApplicant = async (id) => {
+    await fetch(`http://localhost:5000/apply/update-status/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ status: 'hired' })
+    });
 
-  setFilteredApplicants(prev =>
-    prev.map(app =>
-      app.id === id ? { ...app, status: 'hired' } : app
-    )
-  );
-};
+    setApplicants(prev =>
+      prev.map(app =>
+        app.id === id ? { ...app, status: 'hired' } : app
+      )
+    );
+  };
 
-const handleRejectApplicant = (id) => {
-  setApplicants(prev =>
-    prev.map(app =>
-      app.id === id ? { ...app, status: 'rejected' } : app
-    )
-  );
+  const handleRejectApplicant = async (id) => {
+    await fetch(`http://localhost:5000/apply/update-status/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ status: 'rejected' })
+    });
 
-  setFilteredApplicants(prev =>
-    prev.map(app =>
-      app.id === id ? { ...app, status: 'rejected' } : app
-    )
-  );
-};
-
+    setApplicants(prev =>
+      prev.map(app =>
+        app.id === id ? { ...app, status: 'rejected' } : app
+      )
+    );
+  };
 
   // === END REJECT AND HIRE APPLICANT === //
 

@@ -37,7 +37,7 @@ router.post('/submit-application', async (req, res) => {
 
         // Generate jobId and status
         const applicationId = generateApplicationId();
-        const status = 'Under Review';
+        const status = 'under-review';
 
         // Save job vacancy to database
         const app = await Application.create ({
@@ -157,5 +157,35 @@ router.get('/my-applications', async (req, res) => {
   }
 });
 
+// UPDATE application status
+router.put('/update-status/:applicationId', async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    const { status } = req.body;
+
+    if (!['hired', 'rejected'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status update' });
+    }
+
+    const updatedApplication = await Application.findOneAndUpdate(
+      { application_id: applicationId },
+      { status },
+      { new: true }
+    );
+
+    if (!updatedApplication) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    res.status(200).json({
+      message: `Application ${status} successfully`,
+      application: updatedApplication
+    });
+
+  } catch (error) {
+    console.error('Error updating application status:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 module.exports = router;
