@@ -1,0 +1,29 @@
+{
+  "version": "2.5.0",
+  "summary": {
+    "title": "HireSuite",
+    "owner": "Team Guardian of the Data",
+    "description": "HireSuite is a web-based recruitment platform that connects job seekers with employers. The system enables applicants to create profiles, upload resumes, and apply for job positions, while HR personnel can post job vacancies, review applications, and manage the hiring process. The platform uses Node.js/Express backend with MongoDB database for data storage and includes role-based access control for Applicants, HR Personnel, and Administrators.\n\nKey Components:\n- User authentication and authorization system\n- Profile and resume management\n- Job posting and application processing\n- Document storage for resumes\n- Email notification system\n- MongoDB database with collections: users, applications, joblistings, personalinformations, resumes",
+    "id": 0
+  },
+  "detail": {
+    "contributors": [
+      {
+        "name": "Jenny Avorque"
+      },
+      {
+        "name": "Shannan Cate Angeles"
+      },
+      {
+        "name": "Angela Mae Bautista"
+      },
+      {
+        "name": "Mike Rubia"
+      }
+    ],
+    "diagrams": [],
+    "diagramTop": 1,
+    "reviewer": "Mr. Jerald Hallado",
+    "threatTop": 0
+  }
+}
