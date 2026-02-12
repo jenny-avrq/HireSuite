@@ -4,36 +4,112 @@ const cors = require('cors');
 const session = require('express-session');
 const http = require('http');
 const WebSocket = require('ws');
+const helmet = require("helmet");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+app.set("trust proxy", 1);
+app.disable("x-powered-by");
+
+const isProd = process.env.NODE_ENV === "production";
+
 // Connect to MongoDB
 connectDB();
 
-// Middleware
-app.use(cors({
-    origin: "http://localhost:3000",
-    credentials: true
-})); // Allow frontend requests
-app.use(express.json()); // parse JSON
+// Body parsers
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session Middleware
-app.use(session({
-    secret: 'GuardiansOfTheData',
-    resave: false,
-    saveUninitialized: false,
-    cookie: { 
-        secure: false,
-        httpOnly: true,
-        sameSite: "lax" 
-    }
+app.use(helmet({
+  contentSecurityPolicy: {
+    useDefaults: true,
+    directives: {
+      "default-src": ["'self'"],
+      "base-uri": ["'self'"],
+      "object-src": ["'none'"],
+      "frame-ancestors": ["'none'"],
+
+      "script-src": ["'self'"],
+      "style-src": ["'self'", "'unsafe-inline'"],
+
+      "img-src": ["'self'", "data:"],
+      "font-src": ["'self'", "data:"],
+      "connect-src": ["'self'", "ws:", "wss:"],
+
+      ...(isProd ? { "upgrade-insecure-requests": [] } : {}),
+    },
+  },
+  crossOriginEmbedderPolicy: false,
 }));
+
+if (isProd) {
+  app.use((req, res, next) => {
+    const proto = req.headers["x-forwarded-proto"];
+    if (proto && proto !== "https") {
+      return res.redirect(301, `https://${req.headers.host}${req.originalUrl}`);
+    }
+    next();
+  });
+
+  app.use(helmet.hsts({
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: false,
+  }));
+}
+
+app.use(helmet.frameguard({ action: "deny" }));
+
+const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000")
+  .split(",")
+  .map(s => s.trim())
+  .filter(Boolean);
+
+app.use(cors({
+  origin: function (origin, cb) {
+    if (!origin) return cb(null, true);
+    return cb(null, allowedOrigins.includes(origin));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
+
+app.use(session({
+  name: "hiresuite.sid",
+  secret: process.env.SESSION_SECRET || "CHANGE_ME_IN_PRODUCTION",
+  resave: false,
+  saveUninitialized: false,
+  proxy: isProd,
+  cookie: {
+    secure: isProd,
+    httpOnly: true,
+    sameSite: "lax",
+  },
+}));
+
+// Prevent caching of sensitive responses (auth/private APIs)
+app.use((req, res, next) => {
+  const isSensitive =
+    req.path.startsWith("/auth") ||
+    req.path.startsWith("/profile") ||
+    req.path.startsWith("/apply") ||
+    (req.path.startsWith("/job") && ["POST", "PUT", "DELETE"].includes(req.method));
+
+  if (isSensitive) {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+    res.setHeader("Surrogate-Control", "no-store");
+  }
+
+  next();
+});
 
 // Test route
 app.get('/', (req, res) => {
-    res.send('Backend is working!');
+  res.send('Backend is working!');
 });
 
 // Import routes
@@ -55,16 +131,16 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server, path: '/ws' });
 
 wss.on('connection', (ws) => {
-    console.log('Websocket connected!');
+  console.log('Websocket connected!');
 
-    ws.on('message', (message) => {
-        console.log('Received:', message);
-        ws.send(`Echo: ${message}`);
-    });
+  ws.on('message', (message) => {
+    console.log('Received:', message);
+    ws.send(`Echo: ${message}`);
+  });
 
-    ws.on('close', () => {
-        console.log('WebSocket disconnected.');
-    });
+  ws.on('close', () => {
+    console.log('WebSocket disconnected.');
+  });
 });
 
 // Start server
