@@ -152,7 +152,6 @@ router.get('/fetch', async (req, res) => {
         }
 
         res.status(200).json(Object.assign({}, profile, { resume }));
-        console.log('Profile fetched successfully for user:', userId);
 
     } catch (err) {
         console.error('Error fetching profile:', err);

@@ -112,7 +112,6 @@ router.get('/get-applications',  async (req, res) => {
 
         res.status(200).json(applications);
         console.log('All applications successfully fetched!');
-        console.log("DATA FROM DATABASE:", applications);
 
     } catch (err) {
         console.error('Error fetching applications:', err);
