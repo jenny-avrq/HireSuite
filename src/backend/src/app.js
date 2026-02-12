@@ -14,6 +14,10 @@ app.disable("x-powered-by");
 
 const isProd = process.env.NODE_ENV === "production";
 
+const wsOrigin = isProd
+  ? `wss://${process.env.RENDER_EXTERNAL_HOSTNAME || process.env.RENDER_EXTERNAL_HOSTNAME}`
+  : "ws://localhost:5000";
+
 // Connect to MongoDB
 connectDB();
 
@@ -29,13 +33,15 @@ app.use(helmet({
       "base-uri": ["'self'"],
       "object-src": ["'none'"],
       "frame-ancestors": ["'none'"],
+      "form-action": ["'self'"],
+      "frame-src": ["'none'"],
 
       "script-src": ["'self'"],
-      "style-src": ["'self'", "'unsafe-inline'"],
+      "style-src": ["'self'"],
 
       "img-src": ["'self'", "data:"],
       "font-src": ["'self'", "data:"],
-      "connect-src": ["'self'", "ws:", "wss:"],
+      "connect-src": ["'self'", wsOrigin],
 
       ...(isProd ? { "upgrade-insecure-requests": [] } : {}),
     },
@@ -72,7 +78,7 @@ app.use(cors({
     return cb(null, allowedOrigins.includes(origin));
   },
   credentials: true,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
