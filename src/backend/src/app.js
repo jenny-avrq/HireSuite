@@ -18,6 +18,11 @@ const wsOrigin = isProd
   ? `wss://${process.env.RENDER_EXTERNAL_HOSTNAME || process.env.RENDER_EXTERNAL_HOSTNAME}`
   : "ws://localhost:5000";
 
+const sessionSecret = process.env.SESSION_SECRET;
+if (isProd && !sessionSecret) {
+  throw new Error("SESSION_SECRET must be set in production");
+}
+
 // Connect to MongoDB
 connectDB();
 
@@ -84,7 +89,7 @@ app.use(cors({
 
 app.use(session({
   name: "hiresuite.sid",
-  secret: process.env.SESSION_SECRET || "CHANGE_ME_IN_PRODUCTION",
+  secret: sessionSecret || "dev-only-secret",
   resave: false,
   saveUninitialized: false,
   proxy: isProd,
