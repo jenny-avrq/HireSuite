@@ -115,7 +115,24 @@ app.use((req, res, next) => {
 
 // Test route
 app.get('/', (req, res) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
   res.send('Backend is working!');
+});
+
+// Handle robots so it goes through Helmet
+app.get("/robots.txt", (req, res) => {
+  res.type("text/plain").send("User-agent: *\nDisallow:");
+});
+
+// Handle favicon so it goes through Helmet
+app.get("/favicon.ico", (req, res) => {
+  res.status(204).end(); // No Content
+});
+
+// Serve sitemap so it goes through Helmet (and avoids a CSP-light 404 page)
+app.get("/sitemap.xml", (req, res) => {
+  res.type("application/xml").send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>`);
 });
 
 // Import routes
