@@ -14,17 +14,13 @@ app.disable("x-powered-by");
 
 const isProd = process.env.NODE_ENV === "production";
 
-const wsOrigin = isProd
-  ? `wss://${process.env.RENDER_EXTERNAL_HOSTNAME || process.env.RENDER_EXTERNAL_HOSTNAME}`
-  : "ws://localhost:5000";
+const externalHost = process.env.RENDER_EXTERNAL_HOSTNAME || `localhost:${PORT}`;
+const wsOrigin = `${isProd ? "wss" : "ws"}://${externalHost}`;
 
 const sessionSecret = process.env.SESSION_SECRET;
 if (isProd && !sessionSecret) {
   throw new Error("SESSION_SECRET must be set in production");
 }
-
-// Connect to MongoDB
-connectDB();
 
 // Body parsers
 app.use(express.json());
@@ -124,21 +120,34 @@ app.get('/', (req, res) => {
   res.send('Backend is working!');
 });
 
+// lightweight readiness check
+app.get("/healthz", (req, res) => {
+  const dbOk = mongoose.connection.readyState === 1;
+  if (!dbOk) return res.status(503).send("db not ready");
+  res.status(200).send("ok");
+});
+
+const ONE_DAY = 60 * 60 * 24;
+
 // Handle robots so it goes through Helmet
 app.get("/robots.txt", (req, res) => {
+  res.setHeader("Cache-Control", `public, max-age=${ONE_DAY}`);
   res.type("text/plain").send("User-agent: *\nDisallow:");
+});
+
+// Serve sitemap so it goes through Helmet
+app.get("/sitemap.xml", (req, res) => {
+  res.setHeader("Cache-Control", `public, max-age=${ONE_DAY}`);
+  res.type("application/xml").send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>`);
 });
 
 // Handle favicon so it goes through Helmet
 app.get("/favicon.ico", (req, res) => {
-  res.status(204).end(); // No Content
+  res.setHeader("Cache-Control", `public, max-age=${ONE_DAY}`);
+  res.status(204).end();
 });
 
-// Serve sitemap so it goes through Helmet (and avoids a CSP-light 404 page)
-app.get("/sitemap.xml", (req, res) => {
-  res.type("application/xml").send(`<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>`);
-});
 
 // Import routes
 const authRoutes = require('../routes/authentication');
@@ -171,5 +180,12 @@ wss.on('connection', (ws) => {
   });
 });
 
-// Start server
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+(async () => {
+  try {
+    await connectDB();
+    server.listen(PORT, "0.0.0.0", () => console.log(`Listening on ${PORT}`));
+  } catch (e) {
+    console.error(e);
+    process.exit(1);
+  }
+})();
